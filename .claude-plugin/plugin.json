@@ -1,0 +1,14 @@
+{
+  "name": "writing-style",
+  "description": "커밋 메시지 문체 + 주석 컨벤션",
+  "version": "1.0.0",
+  "author": {
+    "name": "RADCNS"
+  },
+  "keywords": [
+    "commit",
+    "comment",
+    "convention",
+    "korean"
+  ]
+}
