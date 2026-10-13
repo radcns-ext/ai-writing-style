@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "커밋 메시지와 코드 주석을 사람이 쓴 것처럼 남기게 하는 Claude Code 스킬",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "writing-style",
       "source": "./",
       "description": "커밋 메시지 문체 + 주석 컨벤션 (스킬 1개)",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "RADCNS"
       }
