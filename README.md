@@ -6,13 +6,35 @@ Claude Code 가 커밋 메시지와 코드 주석을 **사람이 쓴 것처럼**
 
 ## 설치
 
+사내 GitLab 이나 GitHub 중 하나에서 받는다. 둘 다 마켓플레이스 이름이 `radcns-dev` 라서 하나만 추가한다.
+
 ```
+# 사내 GitLab
 /plugin marketplace add http://gitlab.radcns.com/ai-set/writing-style.git
+
+# GitHub
+/plugin marketplace add https://github.com/radcns-ext/ai-writing-style.git
+
 /plugin install writing-style@radcns-dev
 ```
 
-모든 프로젝트에서 자동으로 잡힌다. 업데이트는 `/plugin update writing-style`.
-플러그인 없이 쓰려면 `skills/writing-style/` 폴더를 `~/.claude/skills/` 또는 프로젝트 `.claude/skills/` 에 복사한다.
+아직 push 안 한 변경을 써보고 싶으면 로컬 경로로 추가해도 된다. 이미 `radcns-dev` 를 추가해 뒀다면 `/plugin marketplace remove radcns-dev` 로 먼저 지운다.
+
+```
+/plugin marketplace add /path/to/writing-style
+/plugin install writing-style@radcns-dev
+```
+
+설치하면 모든 프로젝트에서 자동으로 잡힌다. 설치나 업데이트 뒤에는 Claude Code 를 다시 시작해야 반영된다.
+
+업데이트는 이렇게 한다. 반영이 안 되면 `/plugin uninstall writing-style` 후 다시 설치한다.
+
+```
+/plugin marketplace update radcns-dev
+/plugin update writing-style
+```
+
+플러그인 없이 쓰려면 `skills/` 아래 폴더(`writing-style/`, `deliver/`)를 `~/.claude/skills/` 나 프로젝트 `.claude/skills/` 에 복사한다. 이때 deliver 는 `/writing-style:deliver` 가 아니라 `/deliver` 로 부른다.
 
 ## 언제 발동하나
 
