@@ -21,7 +21,7 @@ Claude Code 가 커밋 메시지와 코드 주석을 **사람이 쓴 것처럼**
 | 커밋 메시지를 쓸 때 | "커밋해줘", "커밋 메시지 써줘", "이거 커밋 나눠서" |
 | 주석을 달거나 정리할 때 | "주석 달아줘", "주석 정리해줘", "comment" |
 | 방어 코드·엣지 케이스·비직관 로직을 쓸 때 | 별도 요청 없이 코드 작성 중 자동 적용 |
-| 납품용 repo 로 옮길 때 (직접 호출만) | `/writing-style:deliver api web -> ~/work/client` |
+| 납품용 repo 로 옮길 때 (직접 호출만) | `/writing-style:deliver A/A1 -> B/B1` |
 
 ---
 
@@ -283,12 +283,28 @@ List<Season> list = repo.findActive(pageable);
 
 개발 repo 의 커밋을 **하나씩 따라가며** 납품용 repo 로 옮긴다. source 커밋 하나가 target 커밋 하나가 되고, 메시지는 원래 메시지를 바탕으로 위 커밋 규칙에 맞게 다시 쓴다. 자동으로 발동하지 않고 직접 불렀을 때만 돈다.
 
+`<source 경로> -> <target 경로>` 로 쓰고, 여러 개면 쉼표로 잇는다. 작업 폴더 아래에 repo 가 여러 개 있으면 거기서 실행하면 된다. 작업 폴더 자체는 git repo 가 아니어도 되고, 각 경로가 어느 repo 에 속하는지는 알아서 찾는다.
+
 ```
-# 개발 repo 안에서
-/writing-style:deliver api web/admin -> ~/work/client-delivery
-/writing-style:deliver services/api:server -> ~/work/client-delivery     # 경로를 바꿔서
-/writing-style:deliver api -> ~/work/client-delivery --from v1.3.0       # 이 시점 다음부터
+workspace/          ← 여기서 claude 실행
+├── A/   (개발 repo)    A1/  A2/
+├── C/   (개발 repo)
+└── B/   (납품 repo)
 ```
+
+```
+/writing-style:deliver A/A1 -> B/B1
+/writing-style:deliver A/A1 -> B/B1, A/A2 -> B/B2
+/writing-style:deliver A/A1 -> B/B1, C -> B/C1          # 다른 repo 를 같은 납품 repo 로
+/writing-style:deliver C -> D                           # repo 통째로
+/writing-style:deliver A/A1 -> B/B1 --from v1.3.0       # 이 시점 다음부터
+```
+
+- `X -> Y` 는 X 안의 내용이 Y 안에 그대로 들어간다는 뜻이다. Y 는 아직 없는 폴더여도 된다.
+- 같은 source repo 에서 같은 납품 repo 로 가는 쌍은 한 번에 처리한다. A 커밋 하나가 A1 과 A2 를 같이 바꿨으면 B 에도 커밋 하나로 남는다.
+- source repo 가 다르면 하나씩 차례로 처리하고, 승인도 따로 받는다.
+- 기준점은 source repo 와 경로 조합마다 따로 기록돼서 서로 덮어쓰지 않는다.
+- repo 통째로(`C -> D`) 옮기면 D 에 원래 있던 다른 파일은 지워진다. D 를 C 와 똑같이 맞추는 거라서다.
 
 흐름은 이렇다.
 
@@ -296,7 +312,7 @@ List<Season> list = repo.findActive(pageable);
 2. 커밋마다 원래 메시지와 diff 를 읽고 target 메시지를 쓴다. 사내 티켓 번호, 커밋 해시, 브랜치 이름 같은 내부 정보는 지우고, "wip", "오타" 같은 커밋은 다음 커밋과 합치자고 제안한다.
 3. **source → target 메시지 대응표를 먼저 보여준다.** 승인해야 다음으로 넘어간다.
 4. 오래된 것부터 하나씩 그 시점 스냅샷을 rsync 하고 커밋한다. 작성 시각은 source 커밋 시각을 따른다. push 는 하지 않는다.
-5. 커밋할 때마다 source SHA 를 target 의 `.git/deliver-state` 에 남긴다. 납품물에는 안 들어가고, 중간에 멈춰도 다음에 이어서 할 수 있다.
+5. 커밋할 때마다 source SHA 를 target 의 `.git/deliver/` 에 남긴다. 납품물에는 안 들어가고, 중간에 멈춰도 다음에 이어서 할 수 있다.
 
 예를 들면 이렇게 옮겨진다.
 
