@@ -1,6 +1,6 @@
 # writing-style — 커밋 메시지·주석 문체 스킬
 
-Claude Code 가 커밋 메시지와 코드 주석을 **사람이 쓴 것처럼** 남기게 해주는 스킬이다.
+Claude Code 가 커밋 메시지와 코드 주석을 **사람이 쓴 것처럼** 남기게 해주는 스킬이다. 납품용 repo 로 코드를 옮기면서 커밋까지 정리해주는 `deliver` 스킬도 같이 들어 있다.
 톤은 옆자리 동료한테 설명하듯, 보고서처럼 딱딱하지 않게 잡는다.
 "무엇을 바꿨나" 는 diff 와 코드가 이미 말한다. 이 스킬은 **"왜"** 가 남게 한다.
 
@@ -21,6 +21,7 @@ Claude Code 가 커밋 메시지와 코드 주석을 **사람이 쓴 것처럼**
 | 커밋 메시지를 쓸 때 | "커밋해줘", "커밋 메시지 써줘", "이거 커밋 나눠서" |
 | 주석을 달거나 정리할 때 | "주석 달아줘", "주석 정리해줘", "comment" |
 | 방어 코드·엣지 케이스·비직관 로직을 쓸 때 | 별도 요청 없이 코드 작성 중 자동 적용 |
+| 납품용 repo 로 옮길 때 (직접 호출만) | `/writing-style:deliver api web -> ~/work/client` |
 
 ---
 
@@ -275,6 +276,53 @@ List<Season> list = repo.findActive(pageable);
 4. 결정에는 근거 한 조각 (날짜·이슈·changelog)
 5. 한 줄로 되면 트레일링
 6. 한국어 평서체. 명령조보다 이유가 보이게. 확인 안 된 건 "추정"
+
+---
+
+## 3. 납품 repo 로 옮기기 — `/writing-style:deliver`
+
+개발 repo 의 커밋을 **하나씩 따라가며** 납품용 repo 로 옮긴다. source 커밋 하나가 target 커밋 하나가 되고, 메시지는 원래 메시지를 바탕으로 위 커밋 규칙에 맞게 다시 쓴다. 자동으로 발동하지 않고 직접 불렀을 때만 돈다.
+
+```
+# 개발 repo 안에서
+/writing-style:deliver api web/admin -> ~/work/client-delivery
+/writing-style:deliver services/api:server -> ~/work/client-delivery     # 경로를 바꿔서
+/writing-style:deliver api -> ~/work/client-delivery --from v1.3.0       # 이 시점 다음부터
+```
+
+흐름은 이렇다.
+
+1. 지난 납품 이후 고른 디렉토리를 건드린 source 커밋 목록을 뽑는다. 메인라인만 따라가고, 머지는 곁가지 전체를 커밋 하나로 본다.
+2. 커밋마다 원래 메시지와 diff 를 읽고 target 메시지를 쓴다. 사내 티켓 번호, 커밋 해시, 브랜치 이름 같은 내부 정보는 지우고, "wip", "오타" 같은 커밋은 다음 커밋과 합치자고 제안한다.
+3. **source → target 메시지 대응표를 먼저 보여준다.** 승인해야 다음으로 넘어간다.
+4. 오래된 것부터 하나씩 그 시점 스냅샷을 rsync 하고 커밋한다. 작성 시각은 source 커밋 시각을 따른다. push 는 하지 않는다.
+5. 커밋할 때마다 source SHA 를 target 의 `.git/deliver-state` 에 남긴다. 납품물에는 안 들어가고, 중간에 멈춰도 다음에 이어서 할 수 있다.
+
+예를 들면 이렇게 옮겨진다.
+
+```
+source (개발)                              target (납품)
+a1b2c3d fix: 날짜 버그 (#231)        →     주문 기간검색에서 마지막 날짜가 빠지던 문제
+d4e5f6a wip                          ┐
+0718293 feat: 시즌 동시진행 JIRA-88  ┘ →   시즌 진행중 여러 개 동시 허용
+8a9b0c1 Merge branch 'feat/export'   →     주문 추출을 오더별 한 행으로
+```
+
+첫 납품이라 기준점이 없으면 처음부터 다 옮길지, 특정 시점을 "초기 코드" 커밋 하나로 넣고 그 다음부터 옮길지 먼저 물어본다.
+
+빼야 할 파일은 이렇게 걸러진다.
+
+- 항상 빠지는 것: `.git`, `.env*`, `.idea/`, `.vscode/`, `.claude/`, `CLAUDE.md`, `.DS_Store`
+- 그 밖에는 source 나 target 루트에 `.deliverignore` 를 두면 된다(rsync exclude 형식). `.gitattributes` 의 `export-ignore` 도 적용된다.
+
+```
+# .deliverignore
+*.local.yml
+docs/internal/
+scripts/dev-*
+```
+
+target 에 커밋 안 된 변경이 있으면 이번 납품분과 섞이지 않게 멈춘다.
 
 ---
 

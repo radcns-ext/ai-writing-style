@@ -11,7 +11,7 @@
     {
       "name": "writing-style",
       "source": "./",
-      "description": "커밋 메시지 문체 + 주석 컨벤션 (스킬 1개)",
+      "description": "커밋 메시지 문체 + 주석 컨벤션 + 납품 repo 커밋 이관 (스킬 2개)",
       "version": "1.1.0",
       "author": {
         "name": "RADCNS"
